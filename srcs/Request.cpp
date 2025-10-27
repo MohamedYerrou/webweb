@@ -25,7 +25,7 @@ const std::string&  Request::getUri() const
 }
 
 const std::string& Request::getPath() const
-{
+{z
     return path;
 }
 
@@ -43,19 +43,6 @@ const std::map<std::string, std::string>& Request::getQueries() const
 {
     return queries;
 }
-
-// Added
-const std::string& Request::getBody() const
-{
-	return body;
-}
-
-// Added
-const std::string& Request::getQueryString() const
-{
-	return queryString;
-}
-
 
 void										Request::closeFileUpload()
 {
@@ -170,11 +157,12 @@ void    Request::parseQuery(const std::string& query)
 
 void    Request::splitUri(const std::string& str)
 {
+    //TODO: parse queryString
     std::size_t pos = str.find("?");
     if (pos != std::string::npos)
     {
         path = decodeUri(str.substr(0, pos), false);
-        queryString = decodeUri(str.substr(pos + 1), true); // Modified
+        std::string queryString = decodeUri(str.substr(pos + 1), true);
         parseQuery(queryString);
     }
     else
@@ -299,19 +287,10 @@ void    Request::generateTmpFile(const std::string& target_path, const std::stri
 
 void    Request::appendBody(const char* buf, size_t length)
 {
-    // This function is called for *both* multipart (file) uploads
-    // and simple POST bodies (for CGI).
-    
-    // 1. Append to string body (for CGI)
-    body.append(buf, length);
-
-    // 2. Write to file (for multipart uploads)
-    if (uploadFile != -1)
-    {
-        ssize_t count = write(uploadFile, buf, length);
-        if (count != (ssize_t)length)
-            throw std::runtime_error("Write error: " + std::string(strerror(errno)));
-    }
+    // std::cout << "body from request" << std::endl;
+    ssize_t count = write(uploadFile, buf, length);
+    if (count != (ssize_t)length)
+        throw std::runtime_error("Write error: " + std::string(strerror(errno)));
 }
 
 void    Request::parseRequest(const std::string& raw)

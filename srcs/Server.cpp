@@ -86,3 +86,16 @@ void    Server::init_server(int epfd, std::map<int, Server*>& server_fd)
 			throw_exception("epoll_ctl: ", strerror(errno));
 	}
 }
+
+
+void	Server::addCgiIn(CGIContext CGIctx)
+{
+	CGIstdIn[CGIctx.pipe_to_cgi] = CGIctx;
+}
+
+
+void	Server::addCgiOut(CGIContext CGIctx)
+{
+	CGIstdOut[CGIctx.pipe_from_cgi] = CGIctx;
+	epoll_ctl()
+}

@@ -27,9 +27,6 @@ class Request
 		std::map<std::string, std::string>	queries;
 		size_t								MAX_URL_LENGTH;
 		int									statusCode;
-		std::string							body; // Added: To store request body for CGI
-		std::string							queryString; // Added: To store query string for CGI
-
 	public:
 		Request();
 		~Request();
@@ -40,9 +37,6 @@ class Request
 		const std::string&							getProtocol() const;
 		const std::map<std::string, std::string>&	getHeaders() const;
 		const std::map<std::string, std::string>&	getQueries() const;
-		const std::string&							getBody() const; // Added
-		const std::string&							getQueryString() const; // Added
-
 		void										parseRequest(const std::string& raw);
 		void										parseLine(const std::string& raw);
 		void										parseHeaders(const std::string& raw);

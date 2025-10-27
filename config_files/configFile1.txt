@@ -4,11 +4,11 @@ server {
     //url: /cgi/index.html
 
     location / {
-        root /home/myerrou/test;
+        root /home/myerrou/Import;
         index index1.html;
         methods GET POST DELETE;
         autoindex on;
-        upload_store /home/myerrou/test/www;
+        upload_store /home/myerrou/Import/www;
         error_page 403 /errors/403.html;
         error_page 404 /errors/404.html;
         error_page 405 /errors/405.html;
@@ -19,15 +19,15 @@ server {
 
     location /upload {
         root /var/www/youtube/music;
-        upload_store /home/myerrou/test/upload;
+        upload_store /home/myerrou/Import/upload;
         index index1.html;
         methods GET POST DELETE;
         autoindex on;
     }
 
     location /cgi {
-        root /home/myerrou/test/cgi-bin;
-        index;
+        root /home/myerrou/Import/cgi-bin;
+        index index.py index1.py;
         methods GET POST;
         autoindex off;
         cgi .php /usr/bin/php-cgi;
@@ -55,7 +55,7 @@ server {
     listen 127.0.0.1:3663;
 
     location /upload {
-        root /home/toro/Desktop/test;
+        root /home/toro/Import;
         methods GET;
         index index3.html;
         error_page 302 /errors/302.html;

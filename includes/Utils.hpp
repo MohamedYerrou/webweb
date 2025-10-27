@@ -20,7 +20,7 @@ class MyException: public std::exception
 		virtual ~MyException() _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW {};
 };
 
-void		run_server(int epfd, std::map<int, Server*>& servers_fd);
+// void		run_server(int epfd, std::map<int, Server*>& servers_fd);
 bool		listening_fd(std::map<int, Server*>& servers_fd, int fd);
 void		throw_exception(std::string function, std::string err);
 void		setNonBlocking(int fd);

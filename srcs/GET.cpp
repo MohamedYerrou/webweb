@@ -129,9 +129,16 @@ void    Client::handleGET()
         }
         std::string totalPath = joinPath();
         if (isDir(totalPath))
+        {
+            
             handleDirectory(totalPath);
+        }
         else if (isFile(totalPath))
+        {
+            
+            std::cout <<  "============ reached here ==========="  << std::endl;
             PrepareResponse(totalPath);
+        }
         else
             errorResponse(404, "NOT FOUND");
     }

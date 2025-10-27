@@ -26,15 +26,11 @@ public:
     ~CGIHandler();
 
     void startCGI(const std::string& scriptPath, const std::map<std::string,std::string>& env);
-    void readOutput(); // Reads from out_fd[0] into buffer
-    void closeInFD();  // Added: Closes in_fd[1]
-
+    void readOutput();
     bool isFinished() const;
-    void setFinished(bool val); // Added
     std::string getBuffer() const;
-    void clearBuffer(); // Added
     int getOutFD() const;
-    int getInFD() const; // Added
+    
 };
 
 std::string getExtension(const std::string& path);

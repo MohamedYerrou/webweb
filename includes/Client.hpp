@@ -44,16 +44,9 @@ class Client
 		bool			inBody;
 		bool			finishBody;
 
-		// --- CGI State ---
 		CGIHandler* cgiHandler;
 		bool		isCGI;
 		std::string newPath;
-		int			cgi_out_fd; // Added: FD for CGI's stdout
-		int			cgi_in_fd;  // Added: FD for CGI's stdin
-		size_t		cgi_body_bytes_written; // Added: Track POST body write
-		bool		cgi_body_sent; // Added: True when POST body is fully sent
-		bool		cgi_headers_parsed; // Added: True when CGI headers are parsed
-		std::string	cgi_response_buffer; // Added: Buffers data from cgi_out_fd
 
 	public:
 		Client(int fd, Server* srv);
@@ -76,7 +69,7 @@ class Client
 		
 		//handle methods
 		const Location*	findMathLocation(std::string url);
-		const Location* findBestMatch(const std::string uri);
+		const Location* 		findBestMatch(const std::string uri);
 		std::string		joinPath();
 		void			handleGET();
         void            handleDELETE();
@@ -92,28 +85,24 @@ class Client
 		void    		PrepareResponse(const std::string& path);
 
 		
-		// --- Modified CGI ---
+		//Cgi added by mohamed
+		// std::string 			 executeCGI(const std::string& scriptPath, const std::string& interpreter);
 		std::vector<std::string> buildCGIEnv(const std::string& scriptPath);
+		// void 					 handleCGIResponse(const std::string& cgiOutput);
 		void	checkCGIValid();
-		void 	setupCGI(); // Added: Replaces old handleCGI
-		bool	getIsCGI() const { return isCGI; }
-		void 	setIsCGI(bool val) {isCGI = val; }
-		
-		CGIHandler* getCGIHandler(); // Added
-		int 	getCGIOutFD() const; // Added
-		int 	getCGIInFD() const;  // Added
-		void 	setCGIOutFD(int fd); // Added
-		void 	setCGIInFD(int fd);  // Added
-
-		bool 	isCGIBodySent() const; // Added
-		void 	setCGIBodySent(bool val); // Added
-		size_t* getCGIBytesWrittenPtr(); // Added
-		
-		bool 	areCGIHeadersParsed() const; // Added
-		void 	parseCGIHeaders(); // Added
-		std::string& getCGIResponseBuffer(); // Added
-
-		void 	cleanupCGI();
+		void 					 handleCGI();
+		bool					 getIsCGI() const { return isCGI; }
+		void 					 setIsCGI(bool val) {isCGI = val; }
+		std::string const& getBody() const { return body; }
+		void cleanupCGI()
+		{
+			if (cgiHandler)
+			{
+				delete cgiHandler;
+				cgiHandler = NULL;
+			}
+		}
 };
 
 #endif
+

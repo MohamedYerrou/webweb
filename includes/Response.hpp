@@ -23,12 +23,8 @@ class Response
 		void		setStatus(int code, std::string text);
 		void		setHeaders(std::string key, std::string value);
 		void		setBody(std::string body);
-		std::string getBody() const; // Added
-		
 		std::string	build();
-		std::string buildHeaders(); // Added
-		bool		getSentHeaders() const; // Added
-		void		setSentHeaders(bool flag); // Modified
+		void	setEndHeaders(bool flag);
 };
 
 #endif
