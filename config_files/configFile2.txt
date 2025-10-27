@@ -1,0 +1,29 @@
+server {
+    listen 127.0.0.1:5454;
+
+    location / {
+        root /home/myerrou/server;
+        index html_files/index1.html;
+        methods GET POST DELETE;
+        autoindex on;
+        upload_store /home/myerrou/server/www;
+        error_page 403 /errors/403.html;
+        error_page 301 /errors/301.html;
+        error_page 500 /errors/500.html;
+        error_page 200 /errors/200.html;
+    }
+
+    location /upload {
+        root /var/www/youtube/music;
+        upload_store /home/myerrou/server/upload;
+        index html_files/index1.html;
+        methods GET POST DELETE;
+        autoindex on;
+        return 200 /var/www/youtube/hiphop;
+    }
+
+    location /cgi-bin {
+        cgi .php /usr/bin/php-cgi;
+        cgi .py /usr/bin/python3;
+    }
+}

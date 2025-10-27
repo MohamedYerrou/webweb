@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Server Test Page</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        
+        /* Reset & typography */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; background: #e0e7ff; color: #333; line-height: 1.6; }
+        a { text-decoration: none; color: inherit; }
+
+        header {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: #fff;
+            text-align: center;
+            padding: 3rem 1rem;
+            position: relative;
+        }
+        header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 0.5rem;
+        }
+        header p {
+            font-size: 1.2rem;
+            color: #d0d8ff;
+        }
+
+        /* Container */
+        main {
+            max-width: 900px;
+            margin: -2rem auto 2rem auto;
+            padding: 0 1rem;
+        }
+
+        section.card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        section.card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+        }
+
+        h2 { color: #4b6cb7; margin-bottom: 1rem; }
+        h3 { color: #182848; margin-bottom: 0.5rem; }
+
+        ul.links {
+            list-style: none;
+            padding-left: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        ul.links li {
+            background: #f0f4ff;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        ul.links li:hover {
+            background: #cbd5ff;
+        }
+        ul.links li a {
+            color: #182848;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-top: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem 0;
+            color: #555;
+            font-size: 0.9rem;
+            border-top: 1px solid #cbc;
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s forwards;
+        }
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 class="fade-in">Welcome to My Web Server!</h1>
+        <p class="fade-in" style="animation-delay: 0.3s;">Server is running and serving your files with style!</p>
+    </header>
+
+    <main>
+        <section class="card fade-in" style="animation-delay: 0.6s;">
+            <h2>Server Working</h2>
+            <p>Your web server is successfully serving HTML files. Everything is working perfectly!</p>
+        </section>
+
+        <section class="card fade-in" style="animation-delay: 0.9s;">
+            <h3>Quick Links</h3>
+            <ul class="links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/upload">Upload Page</a></li>
+                <li><a href="/nonexistent">404 Test Page</a></li>
+            </ul>
+        </section>
+
+        <section class="card fade-in" style="animation-delay: 1.2s;">
+            <h3>Test Images</h3>
+            <p>Here’s a sample image (if available in your server root):</p>
+            <p> If the image does not load, ensure that "Quran.jpg" is present in your server's root directory.</p>
+            <img width="300" height="300" src="/Quran.jpg" alt="Test Image">
+        </section>
+    </main>
+
+    <footer>
+        Web Server Version 1.0 &copy; 2025
+    </footer>
+</body>
+</html>
