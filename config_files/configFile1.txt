@@ -27,7 +27,7 @@ server {
 
     location /cgi {
         root /home/myerrou/Import/cgi-bin;
-        index index.py index1.py;
+        index index.py x index1.py;
         methods GET POST;
         autoindex off;
         cgi .php /usr/bin/php-cgi;

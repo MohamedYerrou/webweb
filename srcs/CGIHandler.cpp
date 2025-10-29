@@ -9,7 +9,7 @@
 #include <cstring>
 
 CGIHandler::CGIHandler(Client* c)
-: client(c), pid(-1), started(false), finished(false)
+: client(c), pid(-1), started(false), finished(false), bytes_written(0), _error(false)
 {
     (void)client;
     in_fd[0] = in_fd[1] = -1;
@@ -18,20 +18,27 @@ CGIHandler::CGIHandler(Client* c)
 
 CGIHandler::~CGIHandler()
 {
-    if (in_fd[0] != -1) { close(in_fd[0]); in_fd[0] = -1; }
-    if (in_fd[1] != -1) { close(in_fd[1]); in_fd[1] = -1; }
-    if (out_fd[0] != -1) { close(out_fd[0]); out_fd[0] = -1; }
-    if (out_fd[1] != -1) { close(out_fd[1]); out_fd[1] = -1; }
+    if (in_fd[0] != -1) { 
+        close(in_fd[0]); in_fd[0] = -1; 
+    }
+    if (in_fd[1] != -1) { 
+        close(in_fd[1]); in_fd[1] = -1; 
+    }
+    if (out_fd[0] != -1) { 
+        close(out_fd[0]); out_fd[0] = -1; 
+    }
+    if (out_fd[1] != -1) { 
+        close(out_fd[1]); out_fd[1] = -1; 
+    }
 
     if (pid > 0) {
-    int status;
-    if (waitpid(pid, &status, WNOHANG) <= 0) { 
-        kill(pid, SIGKILL); 
-        waitpid(pid, &status, 0);
+        int status;
+        if (waitpid(pid, &status, WNOHANG) <= 0) { 
+            kill(pid, SIGKILL); 
+            waitpid(pid, &status, 0);
         }
     }
 }
-
 
 bool CGIHandler::isFinished() const
 {
@@ -48,82 +55,177 @@ int CGIHandler::getOutFD() const
     return out_fd[0];
 }
 
-
 std::vector<std::string> Client::buildCGIEnv(const std::string& scriptPath)
 {
     std::vector<std::string> env;
     
-    env.push_back("GATEWAY_INTERFACE=CGI/1.0");
+    env.push_back("GATEWAY_INTERFACE=CGI/1.1");
     env.push_back("SERVER_PROTOCOL=" + currentRequest->getProtocol());
     env.push_back("REQUEST_METHOD=" + currentRequest->getMethod());
     env.push_back("SCRIPT_FILENAME=" + scriptPath);
-    // env.push_back("PATH_INFO=" + pathInfo);  // updated
-
-    std::map<std::string, std::string> headers = currentRequest->getHeaders();
-    if (headers.find("Host") != headers.end())
-        env.push_back("HTTP_HOST=" + headers["Host"]);
+    env.push_back("SCRIPT_NAME=" + currentRequest->getPath());
     
-    if (headers.find("Content-Type") != headers.end())
+    std::string uri = currentRequest->getPath();
+    size_t qPos = uri.find('?');
+    if (qPos != std::string::npos)
+    {
+        env.push_back("QUERY_STRING=" + uri.substr(qPos + 1));
+        env.push_back("PATH_INFO=" + uri.substr(0, qPos));
+    }
+    else
+    {
+        env.push_back("QUERY_STRING=");
+        env.push_back("PATH_INFO=");
+    }
+    
+    env.push_back("PATH_TRANSLATED=" + scriptPath);
+    
+    env.push_back("SERVER_SOFTWARE=webserv/1.0");
+    std::map<std::string, std::string> headers = currentRequest->getHeaders();
+    
+    if (headers.find("Host") != headers.end())
+    {
+        std::string host = headers["Host"];
+        size_t colonPos = host.find(':');
+        if (colonPos != std::string::npos)
+        {
+            env.push_back("SERVER_NAME=" + host.substr(0, colonPos));
+            env.push_back("SERVER_PORT=" + host.substr(colonPos + 1));
+        }
+        else
+        {
+            env.push_back("SERVER_NAME=" + host);
+            env.push_back("SERVER_PORT=80");
+        }
+        env.push_back("HTTP_HOST=" + host);
+    }
+    else
+    {
+        env.push_back("SERVER_NAME=localhost");
+        env.push_back("SERVER_PORT=80");
+    }
+    
+    if (headers.find("Content-Type") != headers.end()) {
         env.push_back("CONTENT_TYPE=" + headers["Content-Type"]);
-
-    if (headers.find("Content-Length") != headers.end())
+    } else {
+        env.push_back("CONTENT_TYPE=");
+    }
+    
+    if (headers.find("Content-Length") != headers.end()) {
         env.push_back("CONTENT_LENGTH=" + headers["Content-Length"]);
-
-    env.push_back("SERVER_SOFTWARE=server/1.0");
+    } else {
+        env.push_back("CONTENT_LENGTH=0");
+    }
+    
+    env.push_back("REMOTE_ADDR=127.0.0.1");
+    env.push_back("REMOTE_HOST=127.0.0.1");
+    
+    if (headers.find("User-Agent") != headers.end())
+        env.push_back("HTTP_USER_AGENT=" + headers["User-Agent"]);
+    if (headers.find("Accept") != headers.end())
+        env.push_back("HTTP_ACCEPT=" + headers["Accept"]);
+    if (headers.find("Accept-Language") != headers.end())
+        env.push_back("HTTP_ACCEPT_LANGUAGE=" + headers["Accept-Language"]);
+    if (headers.find("Accept-Encoding") != headers.end())
+        env.push_back("HTTP_ACCEPT_ENCODING=" + headers["Accept-Encoding"]);
+    if (headers.find("Cookie") != headers.end())
+        env.push_back("HTTP_COOKIE=" + headers["Cookie"]);
+    if (headers.find("Referer") != headers.end())
+        env.push_back("HTTP_REFERER=" + headers["Referer"]);
+    
     env.push_back("REDIRECT_STATUS=200");
-
+    
     return env;
 }
 
-
+#include <sstream>
 
 void Client::handleCGI()
 {
-    // Build environment
-    std::vector<std::string> vecEnv = buildCGIEnv(newPath);
-    std::map<std::string,std::string> envMap;
-    for (std::size_t i = 0; i < vecEnv.size(); ++i)
-    {
-        std::size_t pos = vecEnv[i].find('=');
-        if (pos != std::string::npos)
-            envMap[vecEnv[i].substr(0, pos)] = vecEnv[i].substr(pos + 1);
-    }
-
-    // Start CGI if not already started
     if (!cgiHandler)
     {
+        std::vector<std::string> vecEnv = buildCGIEnv(newPath);
+        std::map<std::string,std::string> envMap;
+        for (std::size_t i = 0; i < vecEnv.size(); ++i)
+        {
+            std::size_t pos = vecEnv[i].find('=');
+            if (pos != std::string::npos)
+                envMap[vecEnv[i].substr(0, pos)] = vecEnv[i].substr(pos + 1);
+        }
+
         cgiHandler = new CGIHandler(this);
+        
         try
         {
             cgiHandler->startCGI(newPath, envMap);
+            return;
         }
         catch (const std::exception& e)
         {
-            std::cerr << "[CGI] Exception while starting CGI: " << e.what() << std::endl;
             errorResponse(500, e.what());
             delete cgiHandler;
             cgiHandler = NULL;
             return;
         }
     }
-
-    // Read output
-    if (cgiHandler)
-        cgiHandler->readOutput();
-
-    // Send response if finished
+    
     if (cgiHandler && cgiHandler->isFinished())
     {
-        std::string body = cgiHandler->getBuffer();
-        std::ostringstream oss;
-        oss << body.size();
+        std::string rawOutput = cgiHandler->getBuffer();
 
-        std::string res = "HTTP/1.1 200 OK\r\n";
-        res += "Content-Type: text/html\r\n";
-        res += "Content-Length: " + oss.str() + "\r\n\r\n";
-        res += body;
+        std::string responseBody;
+        std::string responseHeaders;
 
-        send(getFD(), res.c_str(), res.size(), 0);
+        size_t headerEndPos = rawOutput.find("\r\n\r\n");
+        if (headerEndPos == std::string::npos)
+        {
+            headerEndPos = rawOutput.find("\n\n");
+        }
+
+        if (headerEndPos == std::string::npos)
+        {
+            responseBody = rawOutput;
+            
+            std::ostringstream oss;
+            oss << responseBody.size();
+            
+            responseHeaders = "HTTP/1.1 200 OK\r\n";
+            responseHeaders += "Content-Type: text/html\r\n";
+            responseHeaders += "Content-Length: " + oss.str() + "\r\n";
+        }
+        else
+        {
+            responseBody = rawOutput.substr(headerEndPos + (rawOutput[headerEndPos] == '\r' ? 4 : 2));
+            
+            std::string cgiHeaderPart = rawOutput.substr(0, headerEndPos);
+            
+            std::ostringstream ossBodySize;
+            ossBodySize << responseBody.size();
+
+            responseHeaders = "HTTP/1.1 ";
+            
+            size_t statusPos = cgiHeaderPart.find("Status: ");
+            if (statusPos != std::string::npos)
+            {
+                size_t statusEnd = cgiHeaderPart.find("\r\n", statusPos);
+                if (statusEnd == std::string::npos) statusEnd = cgiHeaderPart.find('\n', statusPos);
+                if (statusEnd == std::string::npos) statusEnd = cgiHeaderPart.length();
+
+                responseHeaders += cgiHeaderPart.substr(statusPos + 8, statusEnd - (statusPos + 8)) + "\r\n";
+            }
+            else
+            {
+                responseHeaders += "200 OK\r\n";
+            }
+            
+            responseHeaders += cgiHeaderPart + "\r\n";
+            responseHeaders += "Content-Length: " + ossBodySize.str() + "\r\n";
+        }
+        
+        std::string finalResponse = responseHeaders + "\r\n" + responseBody;
+
+        send(getFD(), finalResponse.c_str(), finalResponse.size(), 0);
+        
         setSentAll(true);
 
         delete cgiHandler;
@@ -131,49 +233,42 @@ void Client::handleCGI()
     }
 }
 
-
-
-
 void CGIHandler::startCGI(const std::string& scriptPath, const std::map<std::string,std::string>& env)
 {
-    
     int err_pipe[2];
     if (pipe(in_fd) == -1 || pipe(out_fd) == -1 || pipe(err_pipe) == -1) {
-        int saved = errno;
         if (in_fd[0] != -1) { close(in_fd[0]); in_fd[0] = -1; }
         if (in_fd[1] != -1) { close(in_fd[1]); in_fd[1] = -1; }
         if (out_fd[0] != -1) { close(out_fd[0]); out_fd[0] = -1; }
         if (out_fd[1] != -1) { close(out_fd[1]); out_fd[1] = -1; }
-        // if (err_pipe[0] != -1) { close(err_pipe[0]); err_pipe[0] = -1; }
-        // if (err_pipe[1] != -1) { close(err_pipe[1]); err_pipe[1] = -1; }
-        std::cerr << "[CGI] pipe() failed: " << strerror(saved) << "\n";
+        if (err_pipe[0] != -1) { close(err_pipe[0]); err_pipe[0] = -1; }
+        if (err_pipe[1] != -1) { close(err_pipe[1]); err_pipe[1] = -1; }
         throw std::runtime_error("pipe failed");
     }
     
     pid = fork();
+    
     if (pid == -1) {
-        int saved = errno;
         close(in_fd[0]); close(in_fd[1]); in_fd[0] = in_fd[1] = -1;
         close(out_fd[0]); close(out_fd[1]); out_fd[0] = out_fd[1] = -1;
-        // close(err_pipe[0]); close(err_pipe[1]);
-        std::cerr << "[CGI] fork() failed: " << strerror(saved) << "\n";
+        close(err_pipe[0]); close(err_pipe[1]);
         throw std::runtime_error("fork failed");
     }
-    std::cerr << "[CGI] startCGI: script=" << scriptPath
-    << " pid=" << pid << " outfd=" << out_fd[0] << "\n";
     
-    //TODO: Add HTTP Error response whenever something wrong happens in child (500)
     if (pid == 0)
     {
         close(in_fd[1]);
         close(out_fd[0]);
-        // close(err_pipe[0]);
+        close(err_pipe[0]);
 
         dup2(in_fd[0], STDIN_FILENO);
         dup2(out_fd[1], STDOUT_FILENO);
+        dup2(err_pipe[1], STDERR_FILENO);
+
         close(in_fd[0]);
         close(out_fd[1]);
-
+        close(err_pipe[1]);
+        
         std::vector<char*> envp;
         for (std::map<std::string,std::string>::const_iterator it = env.begin(); it != env.end(); ++it)
         {
@@ -184,8 +279,14 @@ void CGIHandler::startCGI(const std::string& scriptPath, const std::map<std::str
         }
         envp.push_back(NULL);
         
+        if (access(scriptPath.c_str(), F_OK) != 0) {
+            write(err_pipe[1], "E", 1);
+            for (size_t i = 0; i < envp.size(); ++i) delete[] envp[i];
+            exit(1);
+        }
+        
         if (access(scriptPath.c_str(), X_OK) != 0) {
-            write(out_fd[1], "E", 1);
+            write(err_pipe[1], "E", 1);
             for (size_t i = 0; i < envp.size(); ++i) delete[] envp[i];
             exit(1);
         }
@@ -193,7 +294,7 @@ void CGIHandler::startCGI(const std::string& scriptPath, const std::map<std::str
         char* argv[] = { const_cast<char*>(scriptPath.c_str()), NULL };
         execve(scriptPath.c_str(), argv, envp.empty() ? NULL : &envp[0]);
 
-        write(out_fd[1], "E", 1);
+        write(err_pipe[1], "E", 1);
         for (size_t i = 0; i < envp.size(); ++i) delete[] envp[i];
         exit(1);
     }
@@ -204,11 +305,12 @@ void CGIHandler::startCGI(const std::string& scriptPath, const std::map<std::str
 
         fcntl(out_fd[0], F_SETFL, O_NONBLOCK);
         fcntl(in_fd[1], F_SETFL, O_NONBLOCK);
-        // close(err_pipe[1]);
+        
+        close(err_pipe[1]);
+        
         CGIContext ctx;
-
         ctx.childpid = pid;
-        ctx.clientfd = client->getFD(); // TODO
+        ctx.clientfd = client->getFD();
         ctx.body = this->client->getBody();
         ctx.output_buffer = "";
         ctx.is_stdin_closed = 0;
@@ -217,78 +319,50 @@ void CGIHandler::startCGI(const std::string& scriptPath, const std::map<std::str
         ctx.pipe_to_cgi = in_fd[1];
         ctx.bytes_written = 0;
         ctx.is_error = 0;
-        // char err = 0;
-        // ssize_t n = read(err_pipe[0], &err, 1);
-        // close(err_pipe[0]);
-        // if (n == 1) {
-        //     int status;
-        //     waitpid(pid, &status, 0);
-        //     pid = -1;
-        //     if (in_fd[1] != -1) { close(in_fd[1]); in_fd[1] = -1; }
-        //     if (out_fd[0] != -1) { close(out_fd[0]); out_fd[0] = -1; }
-        //     std::cerr << "[CGI] execve() failed in child for " << scriptPath << "\n";
-        //     throw std::runtime_error(std::string("execve failed for ") + scriptPath);
-        // }
-         
+        
         started = true;
     }
 }
 
-
-
 void CGIHandler::readOutput()
 {
-	// 1. Basic checks
-	if (!started || finished || out_fd[0] == -1)
-		return;
+    if (!started || finished || out_fd[0] == -1)
+    {
+        return;
+    }
 
-	char buf[1024];
-	
-	// 2. Perform a single read operation.
-	// We rely completely on the caller (the main loop) to only call this
-	// when poll() has indicated POLLIN, making an immediate -1 return less likely
-	// to be a transient EAGAIN (which we cannot check for anyway).
-	ssize_t n = read(out_fd[0], buf, sizeof(buf));
+    char buf[1024];
+    
+    ssize_t n = read(out_fd[0], buf, sizeof(buf));
 
-	if (n > 0)
-	{
-		// Data successfully read. Append it.
-		buffer.append(buf, n);
-	}
-	else if (n == 0)
-	{
-		// End-of-file (CGI process has closed the pipe).
-		// This is the normal completion signal.
-		finished = true;
-		
-		// Attempt to reap the child process gracefully (non-blocking wait)
-		if (pid > 0) {
-			waitpid(pid, NULL, WNOHANG);
-			// We don't set pid = -1 here yet, as we might need to check its status later 
-			// in the handler (though cleaning up in the destructor is safer).
-		}
-		
-		// Close the read end of the pipe
-		close(out_fd[0]);
-		out_fd[0] = -1;
-	}
-	else // n == -1 (Error)
-	{
-		// Since checking errno is strictly forbidden, any -1 is treated as a fatal error.
-		// This covers all persistent errors, including potential (but rare) errors 
-		// even after poll() indicated readiness, and is the safest approach.
-		
-		finished = true;
-		
-		// Attempt to reap the child process (non-blocking wait)
-		if (pid > 0) {
-			waitpid(pid, NULL, WNOHANG);
-		}
-		
-		// Close the pipe and terminate the process gracefully.
-		close(out_fd[0]);
-		out_fd[0] = -1;
-	}
+    if (n > 0)
+    {
+        buffer.append(buf, n);
+    }
+    else if (n == 0)
+    {
+        finished = true;
+        
+        if (pid > 0)
+        {
+            int status;
+            waitpid(pid, &status, WNOHANG);
+        }
+        
+        close(out_fd[0]);
+        out_fd[0] = -1;
+    }
+    else
+    {
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
+        {
+            finished = true;
+            if (pid > 0)
+                waitpid(pid, NULL, WNOHANG);
+            close(out_fd[0]);
+            out_fd[0] = -1;
+        }
+    }
 }
 
 void Client::checkCGIValid()
@@ -330,9 +404,7 @@ void Client::checkCGIValid()
         {
             // Ensure directory path ends with a slash for proper index file joining
             if (originalPath.length() > 0 && originalPath[originalPath.length() - 1] != '/')
-            {
                 originalPath += "/";
-            }
 
             for (size_t i = 0; i < indexFiles.size(); ++i)
             {
@@ -407,4 +479,65 @@ void Client::checkCGIValid()
     setIsCGI(false);
     std::cout << "[CGI Check] Serving static file: " << newPath << std::endl;
 
+}
+
+void CGIHandler::setError(bool error)
+{
+    finished = true;
+    _error = error;
+}
+
+void CGIHandler::setComplete(bool complete)
+{
+    finished = complete;
+    if (complete)
+        _error = false;
+}
+
+bool CGIHandler::is_Error() const
+{
+    return _error;
+}
+
+size_t CGIHandler::getBytesWritten() const
+{
+    return bytes_written;
+}
+
+void CGIHandler::addBytesWritten(size_t bytes)
+{
+    bytes_written += bytes;
+}
+
+void CGIHandler::appendResponse(const char* buf, ssize_t length)
+{
+    if (length > 0)
+    {
+        buffer.append(buf, length);
+    }
+}
+
+int CGIHandler::getPid() const
+{
+    return pid;
+}
+
+bool CGIHandler::isStarted() const
+{
+    return started;
+}
+
+bool CGIHandler::isComplete() const
+{
+    return finished;
+}
+
+int CGIHandler::getStdinFd() const
+{
+    return in_fd[1];
+}
+
+int CGIHandler::getStdoutFd() const
+{
+    return out_fd[0];
 }

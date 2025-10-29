@@ -21,6 +21,7 @@
 #include "includes/Utils.hpp"
 #include <cstdio>
 
+
 void	setNonBlocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
     if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)

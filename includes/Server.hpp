@@ -6,7 +6,7 @@
 #include <map>
 #include "Location.hpp"
 
-
+class Client;
 typedef struct s_CGIContext 
 {
 	int childpid;
@@ -19,6 +19,7 @@ typedef struct s_CGIContext
 	int pipe_to_cgi;
 	int pipe_from_cgi;
 	bool is_error;
+	Client* client;
 } CGIContext;
 class Server
 {
@@ -33,14 +34,14 @@ class Server
 	public:
 	Server();
 	~Server();
-	static void run_server(int epfd, std::map<int, Server*>& servers_fd);
+	void static						run_server(int epfd, std::map<int, Server*>& servers_fd);
 	void							push_listen(std::pair<std::string, int>);
 	void							push_location(Location);
 	void							init_server(int epfd, std::map<int, Server*>& fd_vect);
 	const std::vector<Location>&	getLocations() const;
 	size_t							getMaxSize() const;
-	void	addCgiIn(CGIContext CGIctx);
-	void	addCgiOut(CGIContext CGIctx);
+	void	addCgiIn(CGIContext CGIctx, int fd);
+	void	addCgiOut(CGIContext CGIctx, int fd);
 };
 
 #endif

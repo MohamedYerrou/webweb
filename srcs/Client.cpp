@@ -211,13 +211,29 @@ std::string getExtension(const std::string& path)
 void Client::handleCompleteRequest()
 {
     location = findMathLocation(currentRequest->getPath());
-    newPath = joinPath();
-    if (location->getPATH() == "/cgi")
+    if (!location)
+    {
+        errorResponse(404, "Location not found");
+        return;
+    }
+    // Check if this is a CGI request
+    if (location->getPATH() == "/cgi") // adjust condition as needed
+    {
+        newPath = joinPath();
         checkCGIValid();
-    else if (currentRequest->getMethod() == "GET")
+        if (getIsCGI())
+            handleCGI();
+    }
+    // Handle regular HTTP methods
+    if (currentRequest->getMethod() == "GET")
         handleGET();
     else if (currentRequest->getMethod() == "DELETE")
         handleDELETE();
+    else if (currentRequest->getMethod() == "POST")
+    {
+        // POST without CGI - already handled in handleBody
+        // or handle non-CGI POST here if needed
+    }
 }
 
 
@@ -475,4 +491,55 @@ void    Client::appendData(const char* buf, ssize_t length)
         if (hasBody && !reqComplete)
             handleBody(buf, length);
     }
+}
+
+
+
+
+
+
+
+void Client::setCGIError(bool error)
+{
+    if (cgiHandler)
+        cgiHandler->setError(error);
+}
+
+size_t Client::getCGIBytesWritten() const
+{
+    if (cgiHandler)
+        return cgiHandler->getBytesWritten();
+    return 0;
+}
+
+void Client::addCGIBytesWritten(size_t bytes)
+{
+    if (cgiHandler)
+        cgiHandler->addBytesWritten(bytes);
+}
+
+void Client::appendCGIResponse(const char* buf, ssize_t length)
+{
+    if (cgiHandler)
+        cgiHandler->appendResponse(buf, length);
+}
+
+void Client::setCGIComplete(bool complete)
+{
+    if (cgiHandler)
+        cgiHandler->setComplete(complete);
+}
+
+
+
+
+Server* Client::getServer() const
+{
+    return currentServer;
+}
+
+
+CGIHandler* Client::getCGIHandler()
+{
+    return cgiHandler;
 }
