@@ -19,6 +19,7 @@ class Request
 {
 	private:
 		int									uploadFile;
+		std::string 						fileName;
 		std::string							method;
 		std::string							uri;
 		std::string							path;
@@ -27,10 +28,6 @@ class Request
 		std::map<std::string, std::string>	queries;
 		size_t								MAX_URL_LENGTH;
 		int									statusCode;
-		std::string							body;
-
-
-
 	public:
 		Request();
 		~Request();
@@ -55,8 +52,7 @@ class Request
 		void										appendBody(const char* buf, size_t length);
 		void										generateTmpFile(const std::string& target_path, const std::string& file);
 		void										closeFileUpload();
-
-		const std::string& 							getBody() const;
+		const std::string& 								getFileName() const;
 };
 
 #endif

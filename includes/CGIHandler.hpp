@@ -20,8 +20,7 @@ private:
     bool started;
     bool finished;
     std::string buffer;
-    size_t bytes_written;
-    bool _error;
+     time_t _startTime;
 
 public:
     CGIHandler(Client* c);
@@ -32,22 +31,8 @@ public:
     bool isFinished() const;
     std::string getBuffer() const;
     int getOutFD() const;
-
-    void setError(bool error);
-    size_t getBytesWritten() const;
-    void addBytesWritten(size_t bytes);
-    void appendResponse(const char* buf, ssize_t length);
-    void setComplete(bool complete);
-    int getPid() const;
-    bool isStarted() const;
-    bool isComplete() const;
-    int getStdinFd() const;
-    int getStdoutFd() const;
-    bool is_Error() const;
-
-
+    time_t getStartTime() const { return _startTime; }
+    bool    isStarted() const { return started; }
 };
-
-std::string getExtension(const std::string& path);
 
 #endif

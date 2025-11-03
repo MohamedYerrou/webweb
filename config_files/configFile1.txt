@@ -1,14 +1,14 @@
 server {
-    listen 127.0.0.11:8080;
+    listen 127.0.0.1:8080;
     listen 127.0.0.13:4242;
     //url: /cgi/index.html
 
     location / {
-        root /home/myerrou/Import;
+        root /home/myerrou/webserv;
         index index1.html;
         methods GET POST DELETE;
         autoindex on;
-        upload_store /home/myerrou/Import/www;
+        upload_store /home/myerrou/webserv;
         error_page 403 /errors/403.html;
         error_page 404 /errors/404.html;
         error_page 405 /errors/405.html;
@@ -19,16 +19,17 @@ server {
 
     location /upload {
         root /var/www/youtube/music;
-        upload_store /home/myerrou/Import/upload;
+        upload_store /home/myerrou/webserv/upload;
         index index1.html;
         methods GET POST DELETE;
         autoindex on;
     }
 
     location /cgi {
-        root /home/myerrou/Import/cgi-bin;
-        index index.py x index1.py;
+        root /home/myerrou/webserv/cgi-bin;
+        index GET.py post.py index.py xyz.py test.py;
         methods GET POST;
+        upload_store /home/myerrou/webserv;
         autoindex off;
         cgi .php /usr/bin/php-cgi;
         cgi .py /usr/bin/python3;
@@ -43,8 +44,6 @@ server {
     error_page 302 /errors/302.html;
     error_page 500 /errors/500.html;
 
-    }
-
     location /cgi-bin {
         cgi .php /usr/bin/php-cgi;
         cgi .py  /usr/bin/python3;
@@ -55,7 +54,7 @@ server {
     listen 127.0.0.1:3663;
 
     location /upload {
-        root /home/toro/Import;
+        root /home/toro/Desktop/webserv;
         methods GET;
         index index3.html;
         error_page 302 /errors/302.html;

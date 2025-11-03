@@ -103,6 +103,13 @@ html = f"""<!DOCTYPE html>
             <li><b>Request Method:</b> {os.getenv("REQUEST_METHOD", "Unknown")}</li>
             <li><b>Server Protocol:</b> {os.getenv("SERVER_PROTOCOL", "Unknown")}</li>
             <li><b>Server Time:</b> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</li>
+            <li><b>Gateway Interface:</b> {os.getenv("GATEWAY_INTERFACE", "Unknown")}</li>
+            <li><b>Script Filename:</b> {os.getenv("SCRIPT_FILENAME", "Unknown")}</li>
+            <li><b>Script Name:</b> {os.getenv("SCRIPT_NAME", "Unknown")}</li>
+            <li><b>Server Name:</b> {os.getenv("SERVER_NAME", "Unknown")}</li>
+            <li><b>Server Port:</b> {os.getenv("SERVER_PORT", "Unknown")}</li>
+            <li><b>Remote Address:</b> {os.getenv("REMOTE_ADDR", "Unknown")}</li>
+            <li><b>Content Length:</b> {os.getenv("CONTENT_LENGTH", "0")}</li>
         </ul>
         <footer>Webserv Python CGI © 2025</footer>
     </div>

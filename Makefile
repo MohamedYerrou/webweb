@@ -1,7 +1,7 @@
 NAME = webserv
 
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -fsanitize=address -g3 -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -fsanitize=address -g3
 
 SRC = main.cpp \
 	srcs/CGIHandler.cpp \
@@ -13,7 +13,8 @@ SRC = main.cpp \
 	srcs/Response.cpp \
 	srcs/Utils.cpp \
 	srcs/GET.cpp \
-	srcs/DELETE.cpp
+	srcs/DELETE.cpp \
+	srcs/POST.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

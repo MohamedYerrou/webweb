@@ -9,12 +9,6 @@ Request::~Request()
 {
 }
 
-const std::string& Request::getBody() const
-{
-    return body;
-}
-
-
 int Request::getStatusCode()
 {
     return statusCode;
@@ -53,6 +47,11 @@ const std::map<std::string, std::string>& Request::getQueries() const
 void										Request::closeFileUpload()
 {
     close(uploadFile);
+}
+
+const std::string& 								Request::getFileName() const
+{
+    return fileName;
 }
 
 size_t  Request::getContentLength() const
@@ -269,7 +268,6 @@ void    Request::parseHeaders(const std::string& raw)
 void    Request::generateTmpFile(const std::string& target_path, const std::string& file)
 {
     char		fileNumber[15];
-    std::string fileName;
 
     std::map<std::string, std::string>::iterator it = queries.find("filename");
 
