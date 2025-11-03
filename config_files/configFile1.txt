@@ -4,11 +4,11 @@ server {
     //url: /cgi/index.html
 
     location / {
-        root /home/myerrou/webserv;
+        root /home/jamal/webserv;
         index index1.html;
         methods GET POST DELETE;
         autoindex on;
-        upload_store /home/myerrou/webserv;
+        upload_store /home/jamal/webserv;
         error_page 403 /errors/403.html;
         error_page 404 /errors/404.html;
         error_page 405 /errors/405.html;
@@ -19,14 +19,14 @@ server {
 
     location /upload {
         root /var/www/youtube/music;
-        upload_store /home/myerrou/webserv/upload;
+        upload_store /home/jamal/webserv/upload;
         index index1.html;
         methods GET POST DELETE;
         autoindex on;
     }
 
     location /cgi {
-        root /home/myerrou/webserv/cgi-bin;
+        root /home/jamal/webserv/cgi-bin;
         index GET.py post.py index.py xyz.py test.py;
         methods GET POST;
         upload_store /home/myerrou/webserv;

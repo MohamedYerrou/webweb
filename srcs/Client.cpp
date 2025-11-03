@@ -222,6 +222,8 @@ const Location*   Client::findMathLocation(std::string url)
 void Client::handleCompleteRequest()
 {
     location = findMathLocation(currentRequest->getPath());
+    if (!location)
+        return;
     newPath = joinPath();
     if (location->getPATH() == "/cgi")
         checkCGIValid();
